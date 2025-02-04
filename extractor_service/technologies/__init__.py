@@ -1,0 +1,1 @@
+from .abbreviation_extraction.abbreviation_extraction import AbbreviationExtractionTechnology

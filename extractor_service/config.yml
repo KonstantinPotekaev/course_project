@@ -1,0 +1,109 @@
+# Авторизация воркера в платформе
+# Временно представляемся сервисом досье
+WorkerName: das_processor
+WorkerPassword: das_processorSrvPassword
+
+# параметры логирования в формате logging.config.dictConfig
+# https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig
+Logging:
+  version: 1
+  # не отлключать все остальные логгеры
+  disable_existing_loggers: False
+
+  formatters:
+    # формат по умолчанию 'дата время [уровень] (модуль) сообщение'
+    default:
+      format: '%(asctime)s (%(process)d) [%(levelname)s] (%(name)s) %(message)s'
+
+    uvicorn:
+        (): uvicorn.logging.DefaultFormatter
+        fmt: '%(asctime)s [%(levelname)s] (uvicorn) %(message)s'
+
+    uvicorn_access:
+        (): uvicorn.logging.AccessFormatter
+        fmt: '%(asctime)s [%(levelname)s] (uvicorn) %(message)s'
+
+  handlers:
+    # логирование на экран
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      stream: ext://sys.stdout
+
+    uvicorn_console:
+      class: logging.StreamHandler
+      formatter: uvicorn
+      stream: ext://sys.stdout
+
+    uvicorn_access:
+        formatter: uvicorn_access
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+
+    faster_whisper:
+      formatter: default
+      class: logging.StreamHandler
+      stream: ext://sys.stdout
+
+    speechbrain:
+        formatter: default
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+
+    gensim:
+        formatter: default
+        class: logging.StreamHandler
+        stream: ext://sys.stdout
+
+
+  root:
+    # уровень логирования сервиса (по умолчанию INFO)
+    # возможные значения ERROR, WARNING, INFO, DEBUG
+    level: INFO
+    handlers: [console]
+
+  loggers:
+    uvicorn:
+        handlers:
+          - uvicorn_console
+        level: INFO
+        propagate: False
+
+    uvicorn.error:
+        handlers:
+          - uvicorn_console
+        level: INFO
+        propagate: False
+
+    faster_whisper:
+        handlers:
+          - faster_whisper
+        level: INFO
+        propagate: False
+
+    speechbrain.pretrained.fetching:
+        handlers:
+          - speechbrain
+        level: INFO
+        propagate: False
+
+    speechbrain.utils.parameter_transfer:
+        handlers:
+          - speechbrain
+        level: ERROR
+        propagate: False
+
+    uvicorn.access:
+        handlers:
+          - uvicorn_access
+        level: INFO
+        propagate: False
+
+    gensim.utils:
+      handlers:
+        - gensim
+      level: INFO
+      propagate: False
+
+# режим отладки Flask сервиса, в продакшене должен быть False !
+Debug: False
