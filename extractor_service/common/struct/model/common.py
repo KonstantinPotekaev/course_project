@@ -62,7 +62,8 @@ class ExtendedBaseData(BaseData):
 class S3ContainerInfo(BaseData):
     container_id: str
     s3_object: List[S3ObjectId]
-    reply_bucket_id: Optional[str]
+    user_data: Dict
+    reply_bucket_name: Optional[str]
 
     def __init__(self, **data):
         if 'key_' not in data:

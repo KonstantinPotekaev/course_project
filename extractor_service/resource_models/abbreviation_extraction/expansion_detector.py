@@ -1,4 +1,4 @@
-from typing import Optional, Any, List, Dict
+from typing import Optional, List, Dict
 
 from extractor_service.common.struct.language import LanguageEnum
 from extractor_service.common.struct.mixins.controlled_runnable_mixin import BaseResources
@@ -56,8 +56,8 @@ class ExpansionDetectorModel(BaseResourceModel):
                          proxy_type=Proxy,
                          replicas=replicas)
 
-    def _init_resources(self):
-        return ExpansionDetector()
+    def _init_resources(self) -> Resources:
+        return Resources(detector=ExpansionDetector())
 
     def handle_data(self, resources: Resources, task_data: InData) -> OutData:
         expansions = resources.detector.detect(text=task_data.text,

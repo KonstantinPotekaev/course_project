@@ -2,15 +2,16 @@ from functools import partial
 from typing import Optional, List
 
 from extractor_service.common.const.resources.model_names import ABBREVIATION_DETECTOR, EXPANSION_DETECTOR
-from extractor_service.common.struct.data_storage.content_loader import S3ContentsLoader
+from extractor_service.common.struct.content_loader import S3ContentsLoader
 from extractor_service.common.struct.mixins.controlled_runnable_mixin import BaseResources
 from extractor_service.common.struct.model.abbreviation_extractor import AbbreviationExtractorRequestData, \
     AbbreviationExtractorS3Result
 from extractor_service.common.struct.model.common import S3ContainerInfo
 from extractor_service.common.struct.pipeline import Pipeline, PipelineStep
 from extractor_service.common.struct.queue import BaseInQueueMsg, BaseOutQueueMsg
-from extractor_service.resource_models.base_resource_model import BaseProxyModel, BaseOutMsg
+from extractor_service.resource_models.base_resource_model import BaseProxyModel
 from extractor_service.technologies.abbreviation_extraction.utils.abbreviation_extraction import extract
+from extractor_service.technologies.abbreviation_extraction.utils.merge import merge_contents
 from extractor_service.technologies.base_technology import BaseTechnology
 from utils.aes_utils.models.abbreviation_extractor import AbbreviationExtractionResultsData
 
@@ -73,8 +74,8 @@ class AbbreviationExtractionTechnology(BaseTechnology):
             partial(self._contents_loader.get_contents_gen, merge_contents=False),
             attr_mapping=attr_mapping
         )
-        # container_transform_step = PipelineStep(merge_contents,
-        #                                         attr_mapping=attr_mapping)
+        container_transform_step = PipelineStep(merge_contents,
+                                                attr_mapping=attr_mapping)
         abbreviation_extraction_step = PipelineStep(
             partial(extract,
                     abbreviation_detector_model=abbreviation_detector,
@@ -82,7 +83,7 @@ class AbbreviationExtractionTechnology(BaseTechnology):
             attr_mapping=attr_mapping
         )
 
-        attr_mapping['bucket_id'] = 'reply_bucket_id'
+        attr_mapping['bucket_name'] = 'reply_bucket_name'
         result_upload_step = PipelineStep(self._contents_loader.put_content,
                                           attr_mapping=attr_mapping)
 
@@ -90,12 +91,13 @@ class AbbreviationExtractionTechnology(BaseTechnology):
                             in_item_type=S3ContainerInfo,
                             out_item_type=AbbreviationExtractorS3Result)
         pipeline.add_branch(
+            container_transform_step,
             abbreviation_extraction_step,
             result_upload_step,
         )
         return Resources.construct(pipeline=pipeline)
 
-    async def handle_data(self, resources: Resources, data: AbbreviationExtractorRequestData):
+    async def handle_data(self, resources: Resources, data: AbbreviationExtractorRequestData) -> List[AbbreviationExtractorS3Result]:
         self._logger.debug(f"Msg data: {data}")
 
         meta = {

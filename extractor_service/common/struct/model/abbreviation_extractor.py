@@ -3,9 +3,14 @@ from typing import List, Union, Optional, Dict
 
 from pydantic import Field, validator
 
+from extractor_service.common.func.misc import S3ContentType
 from extractor_service.common.struct.language import LanguageEnum
 from extractor_service.common.struct.model.common import S3ContainerInfo, BaseData
 from utils.aes_utils.models.base_model import to_pascal, BaseModel
+
+
+class TextContent(BaseData):
+    text: str
 
 
 class AbbreviationExtractorRequestData(BaseModel):
@@ -30,15 +35,17 @@ class AbbreviationExtractorRequestData(BaseModel):
 class ExpansionToSave(BaseData):
     file_data: BytesIO
     data_length: int
+    file_type: S3ContentType
 
 
 class CreatedS3Object(BaseData):
-    bucket_id: Optional[str]
+    bucket_name: Optional[str]
     s3_key: Optional[str]
 
 
 class AbbreviationExtractorS3Result(CreatedS3Object):
     container_id: str
+    user_data: Dict
 
     class Config:
         arbitrary_types_allowed = True

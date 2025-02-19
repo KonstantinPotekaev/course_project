@@ -125,13 +125,13 @@ class S3Storage:
         pass
 
     async def get_s3_object(self,
-                            bucket_id: str,
+                            bucket_name: str,
                             object_key: str,
                             encoding: str = "utf-8") -> Optional[Union[bytes, str, dict]]:
 
         try:
             resp = await self._client.get_object(
-                Bucket=bucket_id,
+                Bucket=bucket_name,
                 Key=object_key
             )
         except self._client.exceptions.NoSuchKey:
@@ -146,51 +146,31 @@ class S3Storage:
         return text_data
 
     async def put_s3_object(self,
-                            bucket_id: str,
+                            bucket_name: str,
                             object_id: str,
-                            data: Union[bytes, str, dict, BinaryIO],
+                            data: BytesIO,
                             data_length: int,
-                            s3_content_type: Optional[S3ContentType] = None) -> Optional[str]:
-        assert self._client, "S3 client must be initialized"
-
-        body = data
-        auto_content_type = "application/json"
-
-        # if isinstance(data, (dict, list)):
-        #     body = json.dumps(data).encode("utf-8")
-        #     auto_content_type = "application/json"
-        # elif isinstance(data, str):
-        #     body = data.encode("utf-8")
-        #     auto_content_type = "text/plain"
-        # elif isinstance(data, bytes):
-        #     auto_content_type = "application/octet-stream"
-        # elif hasattr(data, "read"):
-        #     body = data
-        #     auto_content_type = "application/octet-stream"
-        # else:
-        #     raise TypeError(f"Unsupported data type: {type(data)}")
-
-        final_content_type = s3_content_type.value if s3_content_type else auto_content_type
+                            file_type: S3ContentType) -> Optional[str]:
 
         try:
             await self._client.put_object(
-                Bucket=bucket_id,
+                Bucket=bucket_name,
                 Key=object_id,
-                Body=body,
-                ContentType=final_content_type,
+                Body=data.getvalue(),
+                ContentType=file_type.value,
                 ContentLength=data_length
             )
             return object_id
         except Exception as ex:
-            return None
+            raise
 
     async def get_s3_objects(self,
                              objects: List[S3ObjectId],
                              encoding: str = "utf-8") -> Dict[S3ObjectId, Optional[Union[bytes, str, dict]]]:
         results = {}
         for s3_object in objects:
-            content = await self.get_s3_object(bucket_id=s3_object.bucket_id,
-                                               object_key=s3_object.object_id,
+            content = await self.get_s3_object(bucket_name=s3_object.bucket_name,
+                                               object_key=s3_object.s3_key,
                                                encoding=encoding)
             results[s3_object] = content
         return results

@@ -8,13 +8,8 @@ from extractor_service.extractor.languages import kmp_search
 
 
 class LanguageEnum(Enum):
-    """
-    Перечисления для всех доступных языков.
-    Текстовый формат языков записан согласно ISO 639-3 стандарту
-    """
-
-    ENGLISH = "eng"
-    RUSSIAN = "rus"
+    ENGLISH = "en"
+    RUSSIAN = "ru"
 
     def __str__(self):
         return self.value

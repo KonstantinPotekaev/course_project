@@ -1,17 +1,13 @@
 import asyncio
-import json
-import logging
-import uuid
 from abc import abstractmethod, ABC
 from asyncio import QueueEmpty, Task
+from io import BytesIO
 from itertools import chain
-from typing import AsyncGenerator, List, Optional, Generator, Dict, Union, BinaryIO
-
-from six import BytesIO
+from typing import AsyncGenerator, List, Optional, Generator, Dict
 
 import extractor_service.common.globals as aes_globals
 from extractor_service.common.env.general import CONTENTS_FETCH_THREADS, CONTENTS_BATCH_SIZE
-from extractor_service.common.func.misc import S3ObjectInfo, S3ContentType
+from extractor_service.common.func.misc import S3ContentType
 from extractor_service.common.struct.data_storage.s3 import S3Storage
 from extractor_service.common.struct.model.abbreviation_extractor import CreatedS3Object
 from extractor_service.common.struct.model.common import LoadedContainer, BaseData, S3ContainerInfo, ContentList
@@ -72,7 +68,7 @@ class ContentsLoader(ABC):
 
 class S3ContentsLoader(ContentsLoader):
     def __init__(self):
-        # self._logger = aes_globals.service_logger.getChild("content_loader.s3")
+        self._logger = aes_globals.service_logger.getChild("content_loader.s3")
 
         self._s3_client = S3Storage()
 
@@ -90,9 +86,7 @@ class S3ContentsLoader(ContentsLoader):
 
     def _assemble_content(self,
                           container_info: S3ContainerInfo,
-                          contents: Dict[S3ObjectId, Optional[str]],
-                          content_type: S3ContentType,
-                          merge_contents: bool = False) -> Optional[ContentList]:
+                          contents: Dict[S3ObjectId, Optional[str]]) -> Optional[ContentList]:
         if not contents:
             return None
 
@@ -100,8 +94,8 @@ class S3ContentsLoader(ContentsLoader):
         for s3_object in container_info.s3_object:
             content = contents.get(s3_object)
             if content is None:
-                message = f"Contents for object '{s3_object.bucket_id}:{s3_object.object_id}' wasn't found in S3"
-                # self._logger.debug(message)
+                message = f"Contents for object '{s3_object.bucket_name}:{s3_object.s3_key}' wasn't found in S3"
+                self._logger.debug(message)
                 return None
             content_list.append(content)
 
@@ -145,11 +139,9 @@ class S3ContentsLoader(ContentsLoader):
 
         for container in container_batch:
             container_contents = self._assemble_content(container_info=container,
-                                                        contents=contents,
-                                                        content_type=content_type,
-                                                        merge_contents=merge_contents)
+                                                        contents=contents)
             if container_contents is None:
-                message = f"Contents for s3_object '{container.s3_object.object_id}' wasn't found in S3"
+                message = f"Contents for s3_object '{container.container_id}' wasn't found in S3"
                 self._logger.debug(message)
 
                 status = Status.make_status(status=StatusCodes.CONTENT_NOT_FOUND,
@@ -203,26 +195,25 @@ class S3ContentsLoader(ContentsLoader):
 
     async def put_content(self,
                           content_id: str,
-                          file_data: BinaryIO,
-                          bucket_id: str,
-                          data_length: int) -> CreatedS3Object:
-        # aes_globals.service_logger.debug("Create S3 contents sequentially ...")
+                          file_data: BytesIO,
+                          bucket_name: str,
+                          data_length: int,
+                          file_type: S3ContentType) -> CreatedS3Object:
+        aes_globals.service_logger.debug("Create S3 contents sequentially ...")
 
         retry_limit = 3
         while retry_limit:
             try:
                 object_id = await self._s3_client.put_s3_object(data=file_data,
-                                                          object_id=content_id,
-                                                          bucket_id=bucket_id,
-                                                          data_length=data_length)
-                return CreatedS3Object.construct(key_=content_id, bucket_id=bucket_id, object_id=object_id)
+                                                                object_id=content_id,
+                                                                bucket_name=bucket_name,
+                                                                data_length=data_length,
+                                                                file_type=file_type)
+                return CreatedS3Object.construct(key_=content_id, bucket_name=bucket_name, s3_key=object_id)
             except Exception as ex:
-                # self._logger.warning(f"Failed to put S3 object: {ex}, retry...")
+                self._logger.warning(f"Failed to put S3 object: {ex}, retry...")
                 await asyncio.sleep(1)
                 retry_limit -= 1
         status = Status.make_status(status=StatusCodes.CONNECTION_ERROR,
                                     message="Can't push content to S3")
         return CreatedS3Object.construct(key_=content_id, status=status)
-
-
-

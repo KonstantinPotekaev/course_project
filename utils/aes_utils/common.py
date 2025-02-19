@@ -4,10 +4,7 @@ import os
 import random
 import time
 from functools import wraps
-from typing import Optional, Generator, Iterable, Union, Type, Tuple, AsyncGenerator
-
-from pympler.asizeof import asizeof
-from aiohttp import ClientResponse
+from typing import Optional, Union, Type, Tuple, AsyncGenerator
 
 import utils.ut_logging as ut_logging
 
@@ -96,26 +93,6 @@ def retry(exceptions: Union[Type[Exception], Tuple[Type[Exception]]] = Exception
     return wrapper
 
 
-def mem_grouper(item_batch: Iterable, mem_limit: int = 500000) -> Generator:
-    """ Разбивает iterable на группы ограниченного размера,
-     последняя группа может быть меньше mem_limit
-
-    :param item_batch батч векторов для разбиения
-    :param mem_limit лимит по размеру в байтах
-    """
-    item_batch_list = [item_batch]
-    while item_batch_list:
-        item_batch = item_batch_list.pop()
-        batch_size = asizeof(item_batch)
-        if batch_size < mem_limit or len(item_batch) == 1:
-            yield item_batch
-            continue
-
-        pivot = int(len(item_batch) / 2)
-        item_batch_list.append(item_batch[pivot:])
-        item_batch_list.append(item_batch[:pivot])
-
-
 def set_logging(config: dict):
     log_level = os.getenv(SRV_LOG_LEVEL_ENV, None)
     if log_level:
@@ -123,11 +100,3 @@ def set_logging(config: dict):
             ut_logging.LEVEL_SUBSECTION
         ] = log_level.upper()
     logging.config.dictConfig(config[ut_logging.LOGGING_SECTION])
-
-
-async def async_response_message(resp: ClientResponse, ext_mes: Optional[str] = None) -> str:
-    message = await resp.text()
-    server_resp = f"Server response: '{resp.status} {resp.reason}: {message}'"
-    if ext_mes:
-        return f"{ext_mes}. {server_resp}"
-    return server_resp

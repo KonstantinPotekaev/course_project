@@ -1,0 +1,12 @@
+pydantic==1.10.8
+Pympler==1.0.1
+aiohttp==3.9.5
+requests==2.31.0
+PyYAML==6.0.1
+aiobotocore==2.18.0
+aioitertools==0.11.0
+aioboto3==13.4.0
+torchvision==0.17.2
+fastapi==0.110.2
+pymorphy2==0.9.1
+uvicorn==0.29.0

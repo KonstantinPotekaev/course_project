@@ -105,5 +105,12 @@ Logging:
       level: INFO
       propagate: False
 
+    pymorphy2:
+      handlers:
+        - console
+      level: WARNING
+      propagate: False
+
+
 # режим отладки Flask сервиса, в продакшене должен быть False !
 Debug: False

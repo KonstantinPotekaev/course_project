@@ -2,8 +2,7 @@ import json
 from io import BytesIO
 from typing import AsyncGenerator
 
-from sympy import content
-
+from extractor_service.common.func.misc import S3ContentType
 from extractor_service.common.struct.language import LanguageEnum
 from extractor_service.common.struct.model.abbreviation_extractor import ExpansionToSave
 from extractor_service.resource_models.abbreviation_extraction.abbreviation_detector import \
@@ -11,12 +10,11 @@ from extractor_service.resource_models.abbreviation_extraction.abbreviation_dete
 from extractor_service.resource_models.abbreviation_extraction.expansion_detector import Proxy as ExpansionDetectorModel
 
 
-async def extract(
-        content_id: str,
-        text: str,
-        abbreviation_detector_model: AbbreviationDetectorModel,
-        expansion_detector_model: ExpansionDetectorModel,
-        language: LanguageEnum.RUSSIAN) -> AsyncGenerator[ExpansionToSave, None]:
+async def extract(content_id: str,
+                  text: str,
+                  abbreviation_detector_model: AbbreviationDetectorModel,
+                  expansion_detector_model: ExpansionDetectorModel,
+                  language: LanguageEnum.RUSSIAN) -> AsyncGenerator[ExpansionToSave, None]:
     abbreviations = (await abbreviation_detector_model.detect_abbreviations(content_id=content_id,
                                                                             text=text,
                                                                             language=language)).abbreviations
@@ -32,4 +30,5 @@ async def extract(
         key_=content_id,
         file_data=BytesIO(byte_file_content),
         data_length=len(byte_file_content),
+        file_type=S3ContentType.JSON
     )

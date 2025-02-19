@@ -53,8 +53,8 @@ class AbbreviationDetectorModel(BaseResourceModel):
                          proxy_type=Proxy,
                          replicas=replicas)
 
-    def _init_resources(self):
-        return AbbreviationDetector()
+    def _init_resources(self) -> Resources:
+        return Resources(detector=AbbreviationDetector())
 
     def handle_data(self, resources: Resources, task_data: InData) -> OutData:
         abbreviations = resources.detector.detect(text=task_data.text,

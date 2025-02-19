@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Dict
 
 from extractor_service.common.struct.language import LanguageEnum
@@ -6,14 +8,12 @@ from extractor_service.extractor.languages.language_facture import get_language_
 
 
 class ExpansionDetector:
-    def __init__(self):
-        pass
 
     def detect(self,
                text: str,
                abbreviations: List[str],
                language: LanguageEnum) -> Dict[str, Dict[str, int]]:
-        detected_expansions: Dict[str, Dict[str, int]] = {}
+        detected_expansions = {}
 
         language_class = get_language_instance(language)
 
@@ -30,7 +30,7 @@ class ExpansionDetector:
             expansion_str = " ".join(language_class.normalize_words_form(expansion_words))
             freq = WordList.count_phrase_frequency(" ".join(expansion_words).lower(), word_list)
 
-            detected_expansions[abbr].setdefault(expansion_str, 0)
+            detected_expansions.setdefault(abbr, {}).setdefault(expansion_str, 0)
             detected_expansions[abbr][expansion_str] += freq
 
         return detected_expansions
