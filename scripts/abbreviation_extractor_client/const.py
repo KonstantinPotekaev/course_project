@@ -1,0 +1,1 @@
+EXTRACTED_S3_KEY = 'extracted_s3_key'
