@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  utils:
+    build:
+      context: ..
+      dockerfile: docker/dockerfiles/Dockerfile.utils
+    image: my_utils
+    entrypoint: [ "/bin/true" ]
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio_s3
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+    ports:
+      - "9000:9000"   # API
+      - "9090:9090"   # web UI
+    command: server /data --console-address ":9090"
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/dockerfiles/Dockerfile.extractor
+    container_name: abbreviation_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+      - AWS_DEFAULT_REGION=us-east-1
+      - S3_ENDPOINT_URL=http://minio:9000
+      - S3_BUCKET_NAME=abbreviations
+    depends_on:
+      - minio
+      - utils
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/dockerfiles/Dockerfile.web
+    container_name: abbreviation_frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+      - AWS_DEFAULT_REGION=us-east-1
+      - S3_ENDPOINT_URL=http://minio:9000
+      - S3_BUCKET_NAME=abbreviations
+    depends_on:
+      - backend
+      - utils

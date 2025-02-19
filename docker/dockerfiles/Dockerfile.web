@@ -1,0 +1,15 @@
+FROM my_utils as base
+
+WORKDIR /app
+
+COPY ../../web/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем код фронта
+COPY ../../web /app/web
+
+# Открываем порт для Streamlit
+EXPOSE 8501
+
+# Запуск Streamlit
+CMD ["streamlit", "run", "./web/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]

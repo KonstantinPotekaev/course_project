@@ -1,0 +1,12 @@
+FROM my_utils as base
+
+WORKDIR /app
+
+COPY ../../extractor_service /app/extractor_service
+
+COPY ../../extractor_service/requirements.txt /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV PYTHONPATH=/app
+
+CMD ["python", "extractor_service/extractor_2_app.py"]
