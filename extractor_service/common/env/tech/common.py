@@ -1,0 +1,3 @@
+import os
+
+DROP_INACTIVE_MODEL_PERIOD = int(os.getenv("DROP_INACTIVE_MODEL_PERIOD", 3600))
