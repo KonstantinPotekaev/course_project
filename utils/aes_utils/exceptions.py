@@ -11,7 +11,11 @@ class BaseAesException(BasicException):
 
 
 class ConnectionErrorException(BaseAesException):
-    """Ошибка сетевого соединения"""
+    """ Ошибка сетевого соединения """
+
+
+class S3Exception(BaseAesException):
+    """ Ошибка, связанная с S3 """
 
 
 class InternalErrorException(BaseAesException):

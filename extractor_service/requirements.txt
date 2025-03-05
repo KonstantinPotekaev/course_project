@@ -8,5 +8,5 @@ aioitertools==0.11.0
 aioboto3==13.4.0
 torchvision==0.17.2
 fastapi==0.110.2
-pymorphy2==0.9.1
+pymorphy3==2.0.3
 uvicorn==0.29.0

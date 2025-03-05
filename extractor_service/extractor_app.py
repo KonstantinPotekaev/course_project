@@ -1,3 +1,5 @@
+import multiprocessing
+import os
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -12,6 +14,7 @@ from extractor_service.common.env.tech.abbreviation_extraction import ABBREVIATI
     EXPANSION_DETECTOR_REPLICAS, ABBREVIATION_DETECTION_TECH_REPLICAS
 from route import router
 from utils.aes_utils.async_service_app import run_async_service
+from utils.ut_logging import LOGGING_SECTION
 
 SERVICE_NAME = "extractor_service"
 
@@ -51,15 +54,12 @@ async def main(config: dict):
     app = FastAPI(title=SERVICE_NAME, lifespan=lifespan)
     app.include_router(router, prefix="/api")
 
-    config_uvicorn = uvicorn.Config(
-        app=app,
-        host="0.0.0.0",
-        port=8080,
-        log_level="info",
-    )
+    config_uvicorn = uvicorn.Config(app=app,
+                                    host="0.0.0.0",
+                                    port=8080,
+                                    log_config=config[LOGGING_SECTION])
 
-    server = uvicorn.Server(config_uvicorn)
-    await server.serve()
+    await uvicorn.Server(config_uvicorn).serve()
 
 
 async def on_stop_callback():
@@ -67,6 +67,8 @@ async def on_stop_callback():
 
 
 if __name__ == "__main__":
+    os.environ["no_proxy"] = "*"
+    multiprocessing.set_start_method('fork', True)
     run_async_service(service_name=SERVICE_NAME,
                       main_coro=main,
                       on_stop=on_stop_callback())

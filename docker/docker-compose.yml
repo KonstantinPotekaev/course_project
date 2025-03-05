@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   utils:
     build:
@@ -25,13 +23,11 @@ services:
       dockerfile: docker/dockerfiles/Dockerfile.extractor
     container_name: abbreviation_backend
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
-      - AWS_ACCESS_KEY_ID=minio
-      - AWS_SECRET_ACCESS_KEY=minio123
-      - AWS_DEFAULT_REGION=us-east-1
+      - S3_ACCESS_KEY=minio
+      - S3_SECRET_KEY=minio123
       - S3_ENDPOINT_URL=http://minio:9000
-      - S3_BUCKET_NAME=abbreviations
     depends_on:
       - minio
       - utils
@@ -44,13 +40,12 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - BACKEND_URL=http://backend:8000
-
-      - AWS_ACCESS_KEY_ID=minio
-      - AWS_SECRET_ACCESS_KEY=minio123
-      - AWS_DEFAULT_REGION=us-east-1
+      - AES_HOST=http://backend:8080/api/abbrev/extract
       - S3_ENDPOINT_URL=http://minio:9000
-      - S3_BUCKET_NAME=abbreviations
+      - S3_ACCESS_KEY=minio
+      - S3_SECRET_KEY=minio123
+      - S3_BUCKET=abbreviation-extractor-web
     depends_on:
       - backend
+      - minio
       - utils

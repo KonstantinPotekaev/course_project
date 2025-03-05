@@ -3,7 +3,7 @@ import string
 from pathlib import Path
 from typing import List, Tuple
 
-import pymorphy2
+import pymorphy3
 
 
 from extractor_service.common.struct.language import Language
@@ -14,7 +14,7 @@ from extractor_service.extractor.languages import kmp_search
 class Russian(Language):
     def __init__(self):
         super().__init__()
-        self._morph = pymorphy2.MorphAnalyzer()
+        self._morph = pymorphy3.MorphAnalyzer()
         self._invalid_starting_pos_tags = [
             "VERB",
             "INFN",

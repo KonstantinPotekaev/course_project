@@ -10,6 +10,9 @@ from typing import Generator, List, AsyncGenerator
 
 import aiohttp
 
+SCRIPTS_DIR = Path(__file__).absolute().parent.parent.parent
+sys.path.append(str(SCRIPTS_DIR))
+
 from scripts.abbreviation_extractor_client.const import EXTRACTED_S3_KEY
 from scripts.abbreviation_extractor_client.parameter_manager import ConfigurationParams as conf
 from scripts.abbreviation_extractor_client.parameter_manager import ParameterManager, LanguageEnum
@@ -88,7 +91,6 @@ async def _extract_object_batch(host: str,
                 logger.warning(f"Error from {url}: {response.status} - {error_text}")
                 return []
 
-
             result_list = await response.json()
     Statistics.add_statistic(files_to_extract, time() - start_time)
 
@@ -99,7 +101,6 @@ async def _extract_object_batch(host: str,
             logger.warning("Global status not OK: %s - %s",
                            result.data.status.code, result.data.status.message)
             return []
-
 
         for s3_obj_proc in resp_msg.data.s3_objects:
             s3_key = s3_obj_proc.user_data[S3_KEY]
@@ -136,8 +137,8 @@ async def extract_objects(host: str,
         for task in asyncio.as_completed(task_list):
             try:
                 results = await task
-                for transcribed_object in results:
-                    yield transcribed_object
+                for extracted_object in results:
+                    yield extracted_object
             except Exception as ex:
                 logger.info(ex)
 
@@ -152,15 +153,15 @@ def parse_args():
     parser.add_argument("-cfg", "--config", type=Path, required=False, help="Path to the configuration JSON file")
     parser.add_argument("-t", "--threads", type=int, required=False, help="Thread number to use (default=1)")
     parser.add_argument("-c", "--chunk-size", type=int, required=False,
-                        help="Number of files in chunk that will be sent to DAS (default=1)")
+                        help="Number of files in chunk that will be sent to AES (default=1)")
     parser.add_argument("-b", "--bucket", type=str, required=False,
-                        help="Название тестового бакета в S3,"
-                             " который используется для передачи файлов в сервисы AES")
+                        help="Name of the test bucket in S3, "
+                             "which is used for transferring files to AES services")
     parser.add_argument("-l", "--language",
                         type=LanguageEnum,
-                        choices=list(LanguageEnum),
                         required=False,
-                        help="Select language (default: RUSSIAN)")
+                        help=f"Select language (default: {LanguageEnum.RUSSIAN.value}). "
+                             f"Available options: {', '.join(e.value for e in LanguageEnum)}")
     return parser.parse_args()
 
 

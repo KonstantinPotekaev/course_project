@@ -1,18 +1,19 @@
-import asyncio
-import json
-import uuid
 from asyncio import Condition, Lock
 from contextlib import asynccontextmanager, AsyncExitStack
 from functools import wraps
 from inspect import ismethod
 from io import BytesIO
-from typing import Optional, Union, BinaryIO, List, Dict
+from typing import Optional, Union, List, Dict
 
 import aioboto3
+from botocore.exceptions import ClientError
 
-from extractor_service.common.env.general import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
+from extractor_service.common.env.general import S3_ACCESS_KEY, S3_SECRET_KEY, S3_ENDPOINT_URL
 from extractor_service.common.func.misc import S3ContentType
+from utils.aes_utils.exceptions import S3Exception
 from utils.aes_utils.models.abbreviation_extractor import S3ObjectId
+from utils.aes_utils.models.base_message import Status
+from utils.status import StatusCodes
 
 
 def not_activity(func):
@@ -40,10 +41,9 @@ class S3Storage:
         self._client = await self._exit_stack.enter_async_context(
             self._session.client(
                 service_name="s3",
-                region_name=AWS_REGION,
-                endpoint_url="http://localhost:9000",  # Или S3_ENDPOINT_URL
-                aws_access_key_id=AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+                endpoint_url=S3_ENDPOINT_URL,
+                aws_access_key_id=S3_ACCESS_KEY,
+                aws_secret_access_key=S3_SECRET_KEY
             )
         )
 
@@ -128,16 +128,14 @@ class S3Storage:
                             bucket_name: str,
                             object_key: str,
                             encoding: str = "utf-8") -> Optional[Union[bytes, str, dict]]:
-
         try:
             resp = await self._client.get_object(
                 Bucket=bucket_name,
                 Key=object_key
             )
-        except self._client.exceptions.NoSuchKey:
-            return None
-        except Exception as ex:
-            return None
+        except ClientError as e:
+            error_message = e.response["Error"].get("Message", "Unknown error from S3")
+            raise S3Exception(status=Status.make_status(status=StatusCodes.DB_ERROR, message=error_message))
 
         async with resp["Body"] as stream:
             raw_data = await stream.read()
@@ -161,8 +159,9 @@ class S3Storage:
                 ContentLength=data_length
             )
             return object_id
-        except Exception as ex:
-            raise
+        except ClientError as e:
+            error_message = e.response["Error"].get("Message", "Unknown error from S3")
+            raise S3Exception(status=Status.make_status(status=StatusCodes.DB_ERROR, message=error_message))
 
     async def get_s3_objects(self,
                              objects: List[S3ObjectId],

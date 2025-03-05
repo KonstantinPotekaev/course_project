@@ -12,4 +12,4 @@ COPY ../../web /app/web
 EXPOSE 8501
 
 # Запуск Streamlit
-CMD ["streamlit", "run", "./web/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "./web/extractor_web.py", "--server.port=8501", "--server.address=0.0.0.0"]

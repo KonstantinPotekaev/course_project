@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ENV PYTHONPATH=/app
 
-CMD ["python", "extractor_service/extractor_2_app.py"]
+CMD ["python", "extractor_service/extractor_app.py"]
