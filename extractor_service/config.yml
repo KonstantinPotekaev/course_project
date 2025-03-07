@@ -105,7 +105,7 @@ Logging:
       level: INFO
       propagate: False
 
-    pymorphy2:
+    pymorphy3:
       handlers:
         - console
       level: WARNING
