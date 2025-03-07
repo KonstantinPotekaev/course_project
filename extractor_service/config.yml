@@ -1,3 +1,8 @@
+# Авторизация воркера в платформе
+# Временно представляемся сервисом досье
+WorkerName: aes_processor
+WorkerPassword: aes_processorSrvPassword
+
 # параметры логирования в формате logging.config.dictConfig
 # https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig
 Logging:
