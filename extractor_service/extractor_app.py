@@ -1,5 +1,3 @@
-import multiprocessing
-import os
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -67,8 +65,6 @@ async def on_stop_callback():
 
 
 if __name__ == "__main__":
-    os.environ["no_proxy"] = "*"
-    multiprocessing.set_start_method('fork', True)
     run_async_service(service_name=SERVICE_NAME,
                       main_coro=main,
                       on_stop=on_stop_callback())
