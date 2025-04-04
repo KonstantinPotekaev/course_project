@@ -59,6 +59,7 @@ async def save_contents(s3_provider: S3StorageProvider,
 
 
 async def _extract_object_batch(host: str,
+                                api_timeout: int,
                                 object_batch: List[dict],
                                 temp_bucket: str,
                                 extracting_opts: ExtractingOptions) -> List[dict]:
@@ -85,7 +86,7 @@ async def _extract_object_batch(host: str,
 
     async with aiohttp.ClientSession() as session:
         url = _get_abbrev_api(host)
-        async with session.post(url, json=request_msg.dict()) as response:
+        async with session.post(url, json=request_msg.dict(), timeout=api_timeout) as response:
             if response.status != 200:
                 error_text = await response.text()
                 logger.warning(f"Error from {url}: {response.status} - {error_text}")
@@ -117,6 +118,7 @@ async def _extract_object_batch(host: str,
 
 
 async def extract_objects(host: str,
+                          api_timeout: int,
                           s3_objects: list,
                           chunk_size: int,
                           temp_bucket: str,
@@ -128,6 +130,7 @@ async def extract_objects(host: str,
         for object_batch in object_batch_groups:
             task = asyncio.create_task(
                 _extract_object_batch(host=host,
+                                      api_timeout=api_timeout,
                                       object_batch=object_batch,
                                       temp_bucket=temp_bucket,
                                       extracting_opts=extracting_opts)
@@ -157,6 +160,8 @@ def parse_args():
     parser.add_argument("-b", "--bucket", type=str, required=False,
                         help="Name of the test bucket in S3, "
                              "which is used for transferring files to AES services")
+    parser.add_argument("--api-timeout", type=int, required=False,
+                        help="Number of seconds to wait for abbreviation extraction task completion (default=3600s)")
     parser.add_argument("-l", "--language",
                         type=LanguageEnum,
                         required=False,
@@ -190,6 +195,7 @@ async def main():
         extracting_opts = ExtractingOptions(Language=config[conf.LANGUAGE])
         extracting_start_time = time()
         extracted_objects = extract_objects(host=config[conf.HOST],
+                                            api_timeout=config[conf.API_TIMEOUT],
                                             s3_objects=s3_objects,
                                             extracting_opts=extracting_opts,
                                             chunk_size=config[conf.CHUNK_SIZE],

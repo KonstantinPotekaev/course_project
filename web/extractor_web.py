@@ -40,7 +40,7 @@ from web.common.const.general import (
     IS_PROCESSING
 )
 from web.common.env.general import S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY, S3_ENDPOINT_URL, AES_HOST
-from web.common.env.resources import CHUNK_SIZE, THREADS
+from web.common.env.resources import CHUNK_SIZE, THREADS, API_TIMEOUT
 from web.common.providers.data_storage_provider import S3StorageProvider
 from web.common.utils import run_async, iter_grouper
 
@@ -110,7 +110,7 @@ async def _extract_object_batch(host: str,
     )
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(host, json=request_msg.dict()) as response:
+        async with session.post(host, json=request_msg.dict(), timeout=API_TIMEOUT) as response:
             if response.status != 200:
                 st.error(f"Error from {host}: {response.status} - {await response.text()}")
                 return []

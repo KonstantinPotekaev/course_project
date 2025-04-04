@@ -21,6 +21,7 @@ class ConfigurationParams(BaseConfigurationParams):
     THREADS = "threads"
     CHUNK_SIZE = "chunk_size"
     BUCKET = "bucket"
+    API_TIMEOUT = "api_timeout"
     LANGUAGE = "language"
 
 class ParameterManager(BaseParameterManager):
@@ -33,4 +34,5 @@ class ParameterManager(BaseParameterManager):
     threads: ConfigParameter[int] = Field(default=ConfigParameter(value=1, source=ConfigSource.DEFAULT))
     chunk_size: ConfigParameter[int] = Field(default=ConfigParameter(value=1024, source=ConfigSource.DEFAULT))
     bucket: ConfigParameter[str] = Field(default=ConfigParameter(value="abbreviation-test", source=ConfigSource.DEFAULT))
+    api_timeout: ConfigParameter[int] = Field(default=ConfigParameter(value=3600, source=ConfigSource.DEFAULT))
     language: ConfigParameter[LanguageEnum] = Field(default=ConfigParameter(value=LanguageEnum.RUSSIAN, source=ConfigSource.DEFAULT))
