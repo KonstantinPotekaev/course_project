@@ -46,8 +46,6 @@ class AbbreviationsExtractorHandler:
         results = await self._tech.handle(data=data,
                                           language=msg.data.language)
 
-        print(results, flush=True)
-
         resp_msg_list = [
             AbbreviationExtractionResponseMsg(
                 data=AbbreviationExtractionResultsData(s3_objects=data)
